@@ -3,7 +3,7 @@ google.setOnLoadCallback(onGoogleLoaded);
 
 function onGoogleLoaded() {
 
-  var ALL_MARKETS = {"AD":"Andorra","AR":"Argentina","AU":"Australia","AT":"Austria","BE":"Belgium","BO":"Bolivia","BR":"Brazil","BG":"Bulgaria","CA":"Canada","CL":"Chile","CO":"Colombia","CR":"Costa Rica","CY":"Cyprus","CZ":"Czech Republic","DK":"Denmark","DO":"Dominican Republic","EC":"Ecuador","SV":"El Salvador","EE":"Estonia","FI":"Finland","FR":"France","DE":"Germany","GR":"Greece","GT":"Guatemala","HN":"Honduras","HK":"Hong Kong","HU":"Hungary","IS":"Iceland","IE":"Republic of Ireland","IT":"Italy","LV":"Latvia","LI":"Liechtenstein","LT":"Lithuania","LU":"Luxembourg","MY":"Malaysia","MT":"Malta","MX":"Mexico","MC":"Monaco","NL":"Netherlands","NZ":"New Zealand","NI":"Nicaragua","NO":"Norway","PA":"Panama","PY":"Paraguay","PE":"Peru","PH":"Philippines","PL":"Poland","PT":"Portugal","RO":"Romania","ES":"Spain","SG":"Singapore","SK":"Slovakia","SI":"Slovenia","SE":"Sweden","CH":"Switzerland","TW":"Taiwan","TR":"Turkey","GB":"United Kingdom","US":"United States","UY":"Uruguay"};
+  var ALL_MARKETS = {"AD":"Andorra","AR":"Argentina","AU":"Australia","AT":"Austria","BE":"Belgium","BO":"Bolivia","BR":"Brazil","BG":"Bulgaria","CA":"Canada","CL":"Chile","CO":"Colombia","CR":"Costa Rica","CY":"Cyprus","CZ":"Czech Republic","DK":"Denmark","DO":"Dominican Republic","EC":"Ecuador","SV":"El Salvador","EE":"Estonia","FI":"Finland","FR":"France","DE":"Germany","GR":"Greece","GT":"Guatemala","HN":"Honduras","HK":"Hong Kong","HU":"Hungary","IS":"Iceland","IE":"Republic of Ireland","IT":"Italy","LV":"Latvia","LI":"Liechtenstein","LT":"Lithuania","LU":"Luxembourg","MY":"Malaysia","MT":"Malta","MX":"Mexico","MC":"Monaco","NL":"Netherlands","NZ":"New Zealand","NI":"Nicaragua","NO":"Norway","PA":"Panama","PY":"Paraguay","PE":"Peru","PH":"Philippines","PL":"Poland","PT":"Portugal","ES":"Spain","SG":"Singapore","SK":"Slovakia","SE":"Sweden","CH":"Switzerland","TW":"Taiwan","TR":"Turkey","GB":"United Kingdom","US":"United States","UY":"Uruguay"};
   var SPOTIFY_API = 'https://api.spotify.com/v1';
 
   var HIGHLIGHT_TIMEOUT = 100;
@@ -34,8 +34,12 @@ function onGoogleLoaded() {
   function handleFormSubmit(evt) {
     evt.preventDefault();
     var searchValue = evt.target[0].value;
-    var uri = parseUri(searchValue);
-    validateAndPerformSearch(uri);
+    if (searchValue.indexOf('open.spotify.com') > -1) {
+      var parsed = parseUri(searchValue.replace(/https?:\/\/open.spotify.com\//, 'spotify/'), '/');
+    } else {
+      var parsed = parseUri(searchValue);
+    }
+    validateAndPerformSearch(parsed);
   }
 
   function handleExactChange(evt) {
@@ -108,6 +112,9 @@ function onGoogleLoaded() {
     } else if (segments[1] === 'album') {
       type = segments[1];
       id = segments[2];
+    } else if (segments[1] === 'track') {
+      type = segments[1];
+      id = segments[2];
     }
     return {type: type, id: id};
   }
@@ -116,12 +123,25 @@ function onGoogleLoaded() {
     if (parsedUri.type == 'album') {
       document.body.classList.remove('invalid-search');
       performSearch(parsedUri.id);
+    } else if (parsedUri.type == 'track') {
+      document.body.classList.remove('invalid-search');
+      performTrackSearch(parsedUri.id);
     } else {
       document.body.classList.add('invalid-search');
       drawChart([]);
       albumInfoBig.innerHTML = '';
       infoContainer.innerHTML = '';
     }
+  }
+  
+  function performTrackSearch(id) {
+    d3.json(SPOTIFY_API + '/tracks/' + id, function(error, track) {
+      if (error) {
+        console.error(error);
+        return;
+      }
+      performSearch(track.album.id);
+    });
   }
 
   function performSearch(id) {
