@@ -135,20 +135,23 @@ function onGoogleLoaded() {
   }
   
   function performTrackSearch(id) {
-    d3.json(SPOTIFY_API + '/tracks/' + id, function(error, track) {
+    d3.json(SPOTIFY_API + '/tracks/' + id)
+      .header('Authorization', 'Bearer ' + localStorage.getItem('atoken'))
+      .get(function(error, track) {
       if (error) {
         console.error(error);
         return;
       }
       performSearch(track.album.id);
-    });
+    }).header('Authorization', 'Bearer ' + localStorage.getItem('atoken'));
   }
 
   function performSearch(id) {
     setLastSearch(id);
     infoContainer.innerHTML = '';
     
-    d3.json(SPOTIFY_API + '/albums/' + id, function(error, album) {
+    d3.json(SPOTIFY_API + '/albums/' + id).header('Authorization', 'Bearer ' + localStorage.getItem('atoken'))
+      .get(function(error, album) {
       if (error) {
         console.error(error);
         return;
@@ -183,7 +186,8 @@ function onGoogleLoaded() {
   }
 
   function getAlbums(uri, albumName, callback, result) {
-    d3.json(uri, function(error, albums) {
+    d3.json(uri).header('Authorization', 'Bearer ' + localStorage.getItem('atoken'))
+      .get(function(error, albums) {
       albums.items.forEach(function(el) {
         var elName = el.name.toLowerCase().replace(/[,.;:?!"]/g, '');
         var alName = albumName.toLowerCase().replace(/[,.;:?!"]/g, '');
@@ -298,7 +302,9 @@ function onGoogleLoaded() {
   function fillInfoData(result, album) {
     var ids = result.ids;
     if (ids.length) {
-      d3.json(SPOTIFY_API + '/albums?ids=' + ids, function(error, albums) {
+      d3.json(SPOTIFY_API + '/albums?ids=' + ids)
+      .header('Authorization', 'Bearer ' + localStorage.getItem('atoken'))
+      .get(function(error, albums) {
         console.log("Full found albums", albums.albums);
         var nest = d3.nest()
           .key(function(d) { return d.name; })
@@ -429,5 +435,49 @@ function onGoogleLoaded() {
 
   chart = new google.visualization.GeoChart(chartContainer);
   
-  performSearch(getLastSearch() || "18qY7zpuNqeXNGywRysjxx");
+  //performSearch(getLastSearch() || "18qY7zpuNqeXNGywRysjxx");
+  
+  /**
+    * Generates a random string containing numbers and letters
+    * @param  {number} length The length of the string
+    * @return {string} The generated string
+    */
+  function generateRandomString(length) {
+    var text = '';
+    var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    for (var i = 0; i < length; i++) {
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
+  };
+  
+  function testAccessToken() {
+      d3.json(SPOTIFY_API + '/me')
+      .header('Authorization', 'Bearer ' + localStorage.getItem('atoken'))
+      .get(function(error, me) {
+        if (error) {
+            var client_id = '9987b41c25e942cca7df1347cfa504cf'; // Your client id
+            var redirect_uri = 'https://maximko.github.io/saam/callback.html'; // Your redirect uri
+            var scope = '';
+            
+            var state = generateRandomString(16);
+            localStorage.setItem('sp-oauth-state-key', state);
+
+            var url = 'https://accounts.spotify.com/authorize';
+            url += '?response_type=token';
+            url += '&client_id=' + encodeURIComponent(client_id);
+            url += '&scope=' + encodeURIComponent(scope);
+            url += '&redirect_uri=' + encodeURIComponent(redirect_uri);
+            url += '&state=' + encodeURIComponent(state);
+            //url += '&show_dialog=true';
+
+            window.location = url;
+            
+        } else {
+          document.getElementById('username').innerHTML = 'User ' + me.id;
+        }
+      });
+  };
+    testAccessToken();
+  
 }
