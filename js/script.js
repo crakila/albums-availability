@@ -456,8 +456,8 @@ function onGoogleLoaded() {
       .header('Authorization', 'Bearer ' + localStorage.getItem('atoken'))
       .get(function(error, me) {
         if (error) {
-            var client_id = '9987b41c25e942cca7df1347cfa504cf'; // Your client id
-            var redirect_uri = 'https://maximko.github.io/saam/callback.html'; // Your redirect uri
+            var client_id = '06a4bb3983774afc9f8070572ab0c2d4'; // Your client id
+            var redirect_uri = 'https://spotify.pf.ie/callback.html'; // Your redirect uri
             var scope = '';
             
             var state = generateRandomString(16);
